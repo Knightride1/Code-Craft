@@ -29,7 +29,7 @@ Features
         PostgreSQL database on Azure for scalability.
 
 Project Structure
-text
+                                                                                                                
 codecraft/
 ├── client/                   # React Frontend
 │   ├── public/
