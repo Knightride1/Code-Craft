@@ -1,35 +1,19 @@
-const { sequelize, Course, Assignment } = require('./models');
-const { connectDB } = require('./config/db');
-
-const seedDB = async () => {
-    await connectDB();
-    await sequelize.sync({ force: true });
-
-    await Course.bulkCreate([
-        { name: 'CodeCraftX', description: 'Introduction to Hackathon Programming', rating: 5, category: 'General' },
-        { name: 'CodeCraftDSA', description: 'Data Structures and Algorithms', rating: 4, category: 'DSA' },
-        { name: 'CodeCraftPYTHON', description: 'Python for Hackathons', rating: 5, category: 'PYTHON' },
-    ]);
-
-    await Assignment.bulkCreate([
-        {
-            courseId: 1,
-            title: 'Hello World',
-            description: 'Print "Hello, World!"',
-            language: 'python',
-            testCases: [{ input: '', expectedOutput: 'Hello, World!' }],
-        },
-        {
-            courseId: 2,
-            title: 'Array Sum',
-            description: 'Sum an array',
-            language: 'c_cpp',
-            testCases: [{ input: '1 2 3', expectedOutput: '6' }],
-        },
-    ]);
-
-    console.log('Database seeded');
-    process.exit();
-};
-
-seedDB();
+{
+    "name": "codecraft-server",
+    "version": "1.0.0",
+    "dependencies": {
+        "express": "^4.18.2",
+        "sequelize": "^6.32.1",
+        "pg": "^8.11.3",
+        "pg-hstore": "^2.3.4",
+        "bcryptjs": "^2.4.3",
+        "jsonwebtoken": "^9.0.2",
+        "dotenv": "^16.3.1",
+        "cors": "^2.8.5",
+        "express-rate-limit": "^6.7.0",
+        "crypto-js": "^4.1.1"
+    },
+    "scripts": {
+        "start": "node server.js"
+    }
+}
