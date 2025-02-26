@@ -1,0 +1,270 @@
+PM2 is a Production Process Manager for Node.js applications
+                     with a built-in Load Balancer.
+
+                Start and Daemonize any application:
+                $ pm2 start app.js
+
+                Load Balance 4 instances of api.js:
+                $ pm2 start api.js -i 4
+
+                Monitor in production:
+                $ pm2 monitor
+
+                Make pm2 auto-boot at server restart:
+                $ pm2 startup
+
+                To go further checkout:
+                http://pm2.io/
+
+
+8fG9kP2mN5qR7tU0wX3yZ6aB8cD9eF1h
+jK4mN7pQ9rT2uV5wX8yZ1aB3cD6eF9gJ
+
+
+# SSH into VM
+ssh <username>@<vm-public-ip>
+
+# Update and install dependencies
+sudo apt update
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs postgresql postgresql-contrib build-essential
+
+# Configure PostgreSQL
+sudo systemctl start postgresql
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'YourStrongPassword123!';"
+sudo -u postgres createdb codecraft
+
+# Backend setup
+cd ~/codecraft/server
+npm install
+nano .env  # Add config as above
+node seed.js
+npm start &
+
+# Frontend setup (new SSH session)
+cd ~/codecraft/client
+npm install
+# Update API endpoints in src/ files
+npm run build
+npm install -g serve
+serve -s build -l 3000 &
+
+# Open ports
+sudo ufw allow 3000
+sudo ufw allow 5000
+
+
+
+Step 1: SSH into Your Ubuntu Server
+
+    Connect via SSH:
+        On your local Windows machine, use an SSH client (e.g., CMD with OpenSSH, PuTTY, or Windows Terminal):
+        cmd
+
+    ssh <username>@<vm-public-ip>
+    Replace <username> and <vm-public-ip> with your VM’s details (e.g., ssh azureuser@20.123.45.67).
+    Enter your password or use your SSH key if configured.
+
+Navigate to codecraft Directory:
+bash
+
+    cd ~/codecraft
+        Assumes you cloned it to your home directory (/home/<username>/codecraft). Adjust if it’s elsewhere (e.g., cd /path/to/codecraft).
+
+Step 2: Install System Dependencies
+
+    Update Package List:
+    bash
+
+sudo apt update
+Install Node.js and npm:
+
+    Install Node.js 18.x (LTS):
+    bash
+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+Verify:
+bash
+
+    node -v  # Should show v18.x.x
+    npm -v   # Should show 8.x.x or similar
+
+Install PostgreSQL:
+bash
+sudo apt install -y postgresql postgresql-contrib
+
+    Start and enable PostgreSQL:
+    bash
+
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+Verify:
+bash
+
+    psql --version  # Should show psql (PostgreSQL) 14.x or similar
+
+Install Other Tools:
+
+    Git (if not already installed):
+    bash
+
+sudo apt install -y git
+Build essentials (for compiling native modules):
+bash
+
+        sudo apt install -y build-essential
+
+Step 3: Configure PostgreSQL
+
+    Set PostgreSQL User Password:
+        Switch to postgres user:
+        bash
+
+sudo -u postgres psql
+Set a password for the postgres user:
+sql
+\password postgres
+
+    Enter a password (e.g., YourStrongPassword123!) twice, then:
+
+sql
+
+    \q
+
+Create Database:
+bash
+sudo -u postgres createdb codecraft
+Verify Database:
+bash
+
+    psql -U postgres -d codecraft -c "SELECT 1;"
+        Enter the password when prompted. Should return a row with 1.
+
+Step 4: Set Up the Backend (server/)
+
+    Navigate to Backend:
+    bash
+
+cd ~/codecraft/server
+Install Dependencies:
+bash
+npm install
+Configure .env:
+
+    Create or edit .env:
+    bash
+
+nano .env
+Add:
+env
+PORT=5000
+DB_NAME=codecraft
+DB_USER=postgres
+DB_PASSWORD=YourStrongPassword123!
+DB_HOST=localhost
+DB_PORT=5432
+JWT_SECRET=your_jwt_secret_key_32_chars_long
+ENCRYPTION_KEY=your_32_char_encryption_key_here
+Replace YourStrongPassword123! with your PostgreSQL password.
+Generate keys (e.g., use openssl rand -hex 16 twice for 32 chars each):
+bash
+
+    openssl rand -hex 16  # Run twice, combine outputs manually
+    Save (Ctrl+O, Enter, Ctrl+X).
+
+Seed Database (if seed.js exists):
+bash
+node seed.js
+Test Backend:
+bash
+
+    npm start
+        Should show Server running on port 5000 and PostgreSQL Connected.
+        Leave running in this terminal (open a new SSH session for the next steps).
+
+Step 5: Set Up the Frontend (client/)
+
+    Open a New SSH Session:
+    cmd
+
+ssh <username>@<vm-public-ip>
+Navigate to Frontend:
+bash
+cd ~/codecraft/client
+Install Dependencies:
+bash
+npm install
+Build the React App:
+
+    Update API endpoints in client/src/App.js, CodeEditor.js, etc., to use the VM’s public IP:
+    javascript
+
+// Replace http://localhost:5000 with http://<vm-public-ip>:5000
+const response = await fetch('http://<vm-public-ip>:5000/api/courses');
+Replace <vm-public-ip> with your VM’s IP (e.g., 20.123.45.67).
+Build:
+bash
+
+    npm run build
+
+Serve the Built App:
+
+    Install a static file server (e.g., serve):
+    bash
+
+npm install -g serve
+Serve the build:
+bash
+
+        serve -s build -l 3000
+        Frontend runs on http://<vm-public-ip>:3000.
+
+Step 6: Configure Azure VM Networking
+
+    Open Ports:
+        In Azure Portal:
+            Go to your VM > "Networking" > "Inbound port rules".
+            Add rules:
+                Port 3000 (frontend): TCP, Allow, Priority 100.
+                Port 5000 (backend): TCP, Allow, Priority 101.
+            Source: Any, Destination: Any.
+    Check Firewall on Ubuntu:
+    bash
+
+    sudo ufw allow 3000
+    sudo ufw allow 5000
+    sudo ufw status
+
+Step 7: Test the Website
+
+    Frontend: http://<vm-public-ip>:3000
+    Backend API: http://<vm-public-ip>:5000/api/courses
+    Register, log in, enroll, and submit code to verify functionality.
+
+Step 8: Keep It Running
+
+    Run in Background:
+        Backend:
+        bash
+
+nohup npm start &
+Frontend:
+bash
+nohup serve -s build -l 3000 &
+Check processes:
+bash
+
+    ps aux | grep node
+
+Restart on Reboot (Optional):
+
+    Use systemd services (create /etc/systemd/system/codecraft-backend.service and codecraft-frontend.service) or pm2:
+    bash
+
+npm install -g pm2
+cd ~/codecraft/server
+pm2 start server.js --name codecraft-backend
+cd ~/codecraft/client
+pm2 start "serve -s build -l 3000" --name codecraft-frontend
+pm2 save
